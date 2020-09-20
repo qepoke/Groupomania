@@ -1,19 +1,6 @@
-const bcrypt = require('bcrypt'); //Permet le cryptage du mot de passe
 const models = require('../models');
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
-const mailValidator = require('email-validator'); //Permet de s'assurer que l'utilisateur utilise une adresse email valide via une REGEX contenu dans ce plugin
-const passwordValidator = require('password-validator'); // Idem mais pour avoir un mot de passe fort via les propriétés contenues dans schema
-
-const schema = new passwordValidator();
- 
-schema
-.is().min(8)                                    // Minimum length 8
-.is().max(40)                                  // Maximum length 100
-.has().uppercase()                              // Must have uppercase letters
-.has().lowercase()                              // Must have lowercase letters
-.has().digits(2)                                // Must have at least 2 digits
-.has().not().spaces()                           // Should not have spaces
+require('dotenv').config();                      // Should not have spaces
 
 
 exports.signup = (req, res, next) => {

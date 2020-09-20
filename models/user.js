@@ -11,10 +11,17 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      models.User.hasMany(models.Message);
+      models.User.hasMany(models.Message, { foreignKey: 'msgId', allowNull: false });
+      models.User.hasMany(models.Like, { foreignKey: 'likeId', allowNull: false });
+      models.User.hasMany(models.Comment, { foreignKey: 'commentId', allowNull: false });
     }
   };
   User.init({
+    userId: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true // Automatically gets converted to SERIAL for postgres
+    },
     name: DataTypes.STRING,
     email: DataTypes.STRING,
     password: DataTypes.STRING,

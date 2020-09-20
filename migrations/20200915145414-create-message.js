@@ -2,37 +2,28 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('Messages', {
-      id: {
+      msgId: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      id_user:{
+      userId:{
         allowNull: false,
         type: Sequelize.INTEGER,
         references: {
             model:'Users',
-            key: 'id'
+            key: 'userId'
         }
-    },
-      name: {
-        allowNull: false,
-        type: Sequelize.STRING
       },
-      email: {
+      content:{
         allowNull: false,
-        type: Sequelize.STRING
-      },
-      isAdmin: {
-        allowNull: false,
-        type: Sequelize.BOOLEAN
-      },
-      bio: {
         type: Sequelize.TEXT
       },
-      avatar: {
-        type: Sequelize.BLOB
+      like:{
+        allowNull: false,
+        defaultValue: 0,
+        type: Sequelize.INTEGER
       },
       createdAt: {
         allowNull: false,

@@ -15,7 +15,12 @@ schema
 .has().digits(2)                                // Must have at least 2 digits
 .has().not().spaces()                           // Should not have spaces
 
-
+const getUserId = (req) => {
+    const token = req.headers.authorization.split(' ')[1];
+    const decodedToken = jwt.verify(token, process.env.TOKEN);
+    const userId = decodedToken.userId;
+  return userId;
+}
 exports.signup = (req, res, next) => {
     if (!mailValidator.validate(req.body.email)){ // Si l'email n'est pas valide
         res.status(401).json({ message: "Merci de bien vouloir entrer une adresse email valide !" }) // Ajouter un sweet alert
@@ -41,7 +46,7 @@ exports.signup = (req, res, next) => {
                     bio: '',
                     isAdmin: 0
                 })
-                .then((newUser) => res.status(201).json({ message: 'Utilisateur créé avec l\'id ' + newUser.id }))
+                .then((newUser) => res.status(201).json({ message: 'Utilisateur créé avec l\'id ' + newUser.userId }))
                 .catch(error => res.status(400).json({ error }));     
             })    
         } else {
@@ -63,9 +68,9 @@ exports.login = (req, res, next) => {
                 return res.status(401).json({ error: 'Mot de passe incorrect !' })
                 }
                 res.status(200).json({
-                    userId: userFound.id,
+                    userId: userFound.userId,
                     token: jwt.sign(
-                        { userId: userFound.id },
+                        { userId: userFound.userId },
                         process.env.TOKEN, // Encodage du token via la variable d'environnement contenu dans le .env
                         { expiresIn: '3h' } // Expiration de la connexion au bout de 3h
                     )
@@ -81,12 +86,12 @@ exports.login = (req, res, next) => {
 
 exports.viewProfil = (req, res, next) => {
     models.User.findOne({
-        attributes: ['name', 'email', 'bio', 'avatar'],
-        where: { id: req.params.id }
+        attributes: ['name', 'email', 'bio', 'avatar', 'isAdmin'],
+        where: { userId: req.params.userId }
     })
     .then((userFound) => {
         if (userFound) {
-          res.status(201).json(user);
+          res.status(201).json(userFound);
         } else {
           res.status(404).json({ error: 'Utilisateur non trouvé' })
         }
@@ -108,16 +113,26 @@ exports.editProfil = (req, res, next) => {
     //     avatar: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     //     } : { ...req.body };
     models.User.findOne({
-        where: { id: req.params.id }
+        where: { userId: req.params.userId }
     })
     .then((userFound) => {
         if (userFound) {
-            models.User.update(req.body, {
-                attributes: [ 'bio', 'avatar'],
-                where: { id: req.params.id }
-              })
-              .then(() => res.status(201).json({ message: 'Profil mis à jour'}))
-              .catch((error) => res.status(500).json ({ error }))
+            models.User.findOne({
+                attributes: [ 'isAdmin'],
+                where: { userId: getUserId(req) }
+            })
+            .then((userIsAdmin) => {
+                if((getUserId(req) == req.params.userId) || (userIsAdmin.dataValues.isAdmin == true)) {
+                    models.User.update(req.body, {
+                        attributes: [ 'bio', 'avatar'],
+                        where: { userId: req.params.userId }
+                    })
+                    .then(() => res.status(201).json({ message: 'Profil mis à jour'}))
+                    .catch((error) => res.status(500).json ({ error }))
+                } else {
+                    res.status(401).json({ error: 'Vous n\'êtes pas autorisé à mettre à jour le profil' })
+                }
+            })
         } else {
           res.status(404).json({ error: 'Utilisateur non trouvé' })
         }
@@ -128,17 +143,29 @@ exports.editProfil = (req, res, next) => {
 }
 
 exports.deleteProfil = (req, res, next) => {
-    models.User.destroy({
-        where: { id: req.params.id }
+    models.User.findOne({
+        where: { userId: req.params.userId }
     })
     .then((userFound) => {
         if (userFound) {
-          res.status(201).json({ message: 'Compte supprimé'})
+            models.User.findOne({
+                attributes: [ 'isAdmin'],
+                where: { userId: getUserId(req) }
+            })
+            .then((userIsAdmin) => {
+                if ((getUserId(req) == userFound.userId) || (userIsAdmin.dataValues.isAdmin == true)) {
+                    models.User.destroy({
+                        where: { userId: req.params.userId }
+                    })
+                    .then(() => res.status(201).json({ message: 'Compte supprimé'}))
+                    .catch((error) => res.status(404).json({ error })) 
+                } else {
+                    res.status(401).json({ error: 'Vous n\'êtes pas autorisé à supprimer le compte' })
+                }
+            })
         } else {
-          res.status(404).json({ error: 'Utilisateur non trouvé' })
+            res.status(404).json({ error: 'Profil non trouvé' })
         }
     })
-    .catch((error) => {
-        res.status(500).json({ error: 'Impossible de supprimer le compte' })
-    })
+    .catch((error) => res.status(500).json({ error: 'Impossible de supprimer le compte' }))
 }
