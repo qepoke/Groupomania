@@ -14,7 +14,7 @@ exports.allMessages = (req, res, next) => {
         attributes: ['content', 'createdAt', 'msgId', 'userId', 'like'],
         include: [{
             model: models.User,
-            attributes: ['name']
+            attributes: ['name', 'userId', 'avatar']
             },
             {
             model: models.Comment,
@@ -27,7 +27,7 @@ exports.allMessages = (req, res, next) => {
         ],
         order: [['createdAt', 'DESC']]
     })
-    .then((messages) => res.status(201).json({ messages }))
+    .then((messages) => res.status(200).json({ messages }))
     .catch((error) => res.status(400).json({ error:  'Erreur de la base de données, impossible de récupérer les messages' }))
 }
 
@@ -65,7 +65,7 @@ exports.createMessage = (req, res, next) => {
     models.Message.create({
         include: [{
             model: models.User,
-            attributes: ['name', 'userId']
+            attributes: ['name', 'userId', 'avatar']
             }
         ],
         content: req.body.content,

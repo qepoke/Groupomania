@@ -34,9 +34,9 @@ module.exports = {
         defaultValue: ''
       },
       avatar: {
-        allowNull: true,
-        type: Sequelize.BLOB,
-        defaultValue: ''
+        allowNull: false,
+        type: Sequelize.TEXT,
+        defaultValue: 'http://localhost:3000/images/avatar-default.png'
       },
       createdAt: {
         allowNull: false,

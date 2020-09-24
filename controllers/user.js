@@ -44,7 +44,8 @@ exports.signup = (req, res, next) => {
                     password: hash,
                     name: req.body.name,
                     bio: '',
-                    isAdmin: 0
+                    isAdmin: 0,
+                    avatar: "http://localhost:3000/images/avatar-default.png"
                 })
                 .then((newUser) => res.status(201).json({ message: 'Utilisateur créé avec l\'id ' + newUser.userId }))
                 .catch(error => res.status(400).json({ error }));     
