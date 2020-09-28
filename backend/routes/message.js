@@ -10,8 +10,8 @@ router.get('/message/:msgId', auth, msgCtrl.viewMessage);
 router.put('/message/:msgId', auth, msgCtrl.editMessage);
 router.delete('/message/:msgId', auth, msgCtrl.deleteMessage);
 
-// router.post('/message/:msgId/like', msgCtrl.postLike);
-// router.delete('/message/:msgId/like/:likeId', auth, msgCtrl.deleteLike);
+router.post('/message/:msgId/like', msgCtrl.postLike);
+router.delete('/message/:msgId/like', auth, msgCtrl.deleteLike);
 
 
 

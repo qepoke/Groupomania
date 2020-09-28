@@ -1,7 +1,7 @@
 <template>
       <v-container
         fluid
-        class="mt-10"
+        fill-height
       >
         <v-row
           align="center"
@@ -74,8 +74,10 @@ import axios from 'axios'
             password: this.password,
             })
             .then(response => {
+              console.log(response)
               this.$store.dispatch('setToken', response.data.token)
               this.$store.dispatch('setUser', response.data.userId)
+              this.$store.dispatch('setAdmin', response.data.isAdmin)
               this.$router.push('/Message')
             })
             .catch(error => {

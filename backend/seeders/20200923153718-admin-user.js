@@ -8,6 +8,7 @@ module.exports = {
       password: '$2b$10$DMNKwd.sHJnXvVrZglTPreMtRSJgblyJ20TNfhcCtD2KFkCEEjY2O',
       avatar: 'http://localhost:3000/images/avatar-default.png',
       isAdmin: true,
+      bio: 'Veuillez compléter votre profil...',
       createdAt: new Date(),
       updatedAt: new Date()
     }]);

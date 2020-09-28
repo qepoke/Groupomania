@@ -11,17 +11,18 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      models.User.belongsToMany(models.Message, { through: Like, foreignKey: "userId" });
-      models.User.belongsToMany(models.Comment, { through: Like, foreignKey: "userId" });
+      models.User.belongsTo(models.Message, {foreignKey: "msgId", onDelete: 'CASCADE', allowNull: false });
+      models.User.belongsTo(models.Message, {foreignKey: "userId", onDelete: 'CASCADE', allowNull: false});
     }
   };
   Like.init({
     likeId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true // Automatically gets converted to SERIAL for postgres
+      autoIncrement: true
     },
-    like: DataTypes.INTEGER
+    userId: DataTypes.INTEGER,
+    msgId: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'Like',

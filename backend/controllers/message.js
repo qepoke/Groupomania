@@ -15,14 +15,6 @@ exports.allMessages = (req, res, next) => {
         include: [{
             model: models.User,
             attributes: ['name', 'userId', 'avatar']
-            },
-            {
-            model: models.Comment,
-            attributes: ['comment', 'userId', 'createdAt']
-            },
-            {
-            model: models.Like,
-            attributes: ['likeId', 'userId', 'msgId']
             }
         ],
         order: [['createdAt', 'DESC']]
@@ -37,7 +29,7 @@ exports.viewMessage = (req, res, next) => {
         where: { msgId: req.params.msgId },
         include: [{
             model: models.User,
-            attributes: ['name']
+            attributes: ['name', 'userId', 'avatar']
             },
             {
             model: models.Comment,
@@ -45,13 +37,18 @@ exports.viewMessage = (req, res, next) => {
             },
             {
             model: models.Like,
-            attributes: ['likeId', 'userId', 'msgId']
+            attributes: ['likeId', 'userId', 'msgId'],
             }
         ],
     })
-    .then((msgFound) => {
-        if (msgFound) {
-          res.status(200).json(msgFound);
+    .then((message) => {
+        if (message) {
+        models.Like.findAndCountAll({
+            attributes: ['userId'],
+            where: { msgId: req.params.msgId}
+        })
+        .then((likeCount) => res.status(200).json({likeCount, message}))
+        .catch(error => res.status(500).json({ error: "Impossible de récupérer les likes"}))
         } else {
           res.status(404).json({ error: 'Ce message n\'existe pas' })
         }
@@ -149,11 +146,118 @@ exports.deleteMessage = (req, res, next) => {
     .catch((error) => res.status(500).json({ error: 'Impossible de supprimer le message' }))
 }
 
-// exports.postLike = (req, res, next) => {
-//         models.Message.findOne({
-            
-//         })
-//         models.Message.increment({
+exports.postLike = (req, res, next) => {
+    models.Message.findOne({
+        attributes: ['msgId'],
+        where: { msgId: req.params.msgId },
+    })
+    .then((msgFound) => {
+        if (msgFound) {
+            models.Like.findOne({
+                attributes: ['userId', 'msgId'],
+                where: { userId: getUserId(req),
+                        msgId: req.params.msgId }
+            })
+            .then((likeFound) => {
+                if (!likeFound) {
+                    models.Like.create({
+                        include: [{
+                            model: models.User,
+                            attributes: ['userId']
+                            },
+                            {
+                            model: models.Message,
+                            attributes: ['msgId']
+                            }
+                        ],
+                        userId : getUserId(req),
+                        msgId : req.params.msgId
+                    })
+                    .then((message) => res.status(201).json({ message: "Like posté" }))
+                    .catch((error) => res.status(400).json({ error:  'Erreur de la base de données, impossible de posté le like' }))
+                } else {
+                  res.status(404).json({ error: 'Vous avez déjà liké' })
+                }
+            })
+            .catch((error) => {
+                res.status(500).json({ error: 'Impossible de liké le message' })
+            })
+        } else {
+          res.status(404).json({ error: 'Ce message n\'existe pas' })
+        }
+    })
+    .catch((error) => {
+        res.status(500).json({ error: 'Impossible de voir le message' })
+    })
+        
+}
+
+exports.deleteLike = (req, res, next) => {
+    models.Message.findOne({
+        attributes: ['msgId'],
+        where: { msgId: req.params.msgId },
+    })
+    .then((msgFound) => {
+        if (msgFound) {
+            models.Like.findOne({
+                attributes: ['userId', 'msgId'],
+                where: { userId: getUserId(req),
+                        msgId: req.params.msgId }
+            })
+            .then((likeFound) => {
+                if (likeFound) {
+                    models.Like.destroy({
+                        where: { msgId: req.params.msgId,
+                                userId: getUserId(req) },
+                    })
+                    .then((message) => res.status(201).json({ message: "Like supprimé" }))
+                    .catch((error) => res.status(400).json({ error:  'Erreur de la base de données, impossible de supprimer le like' }))
+                } else {
+                  res.status(404).json({ error: 'Vous ne pouvez pas supprimer un like qui n\'existe pas' })
+                }
+            })
+            .catch((error) => {
+                res.status(500).json({ error: 'Impossible de supprimer le like' })
+            })
+        } else {
+          res.status(404).json({ error: 'Ce message n\'existe pas' })
+        }
+    })
+    .catch((error) => {
+        res.status(500).json({ error: 'Impossible de voir le message' })
+    })
+        
+}
+
+// exports.deleteLike = (req, res, next) => {
+//     models.Like.findOne({
+//         attributes: ['userId', 'msgId'],
+//         where: { msgId: req.params.msgId },
+//         include: [{
+//             model: models.User,
+//             attributes: ['name', 'userId', 'avatar']
+//             },
+//             {
+//             model: models.Comment,
+//             attributes: ['comment', 'userId', 'createdAt']
+//             },
+//             {
+//             model: models.Like,
+//             attributes: ['likeId', 'userId', 'msgId']
+//             }
+//         ],
+//     })
+//     .then((msgFound) => {
+//         if (msgFound) {
+//           res.status(200).json(msgFound);
+//         } else {
+//           res.status(404).json({ error: 'Ce message n\'existe pas' })
+//         }
+//     })
+//     .catch((error) => {
+//         res.status(500).json({ error: 'Impossible de voir le message' })
+//     })
+//         models.Message.decrement({
 //             'like' : 1,
 //             include: [{
 //                 model: models.Like,
@@ -164,17 +268,11 @@ exports.deleteMessage = (req, res, next) => {
 //             userId : getUserId(req)
             
 //         })
-//         .then((msgFound) => {
-//             if (msgFound) {
-//             res.status(201).json({ message: 'Message supprimé'})
-//             } else {
-//             res.status(404).json({ error: 'Message non trouvé' })
-//             }
+//         .then((msgLiked) => { 
+//             res.status(201).json({ message: 'Message liké'})
+
 //         })
 //         .catch((error) => {
-//             res.status(500).json({ error: 'Impossible de supprimer le message' })
+//             res.status(500).json({ error: 'Impossible de liké le message' })
 //         })
-//     } else {
-//         res.status(401).json({ error: 'Vous n\'êtes pas autorisé à supprimer le message' })
-//     }
 // }

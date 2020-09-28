@@ -4,6 +4,8 @@ import Login from '../components/Login.vue'
 import SignUp from '../components/SignUp.vue'
 import Home from '../components/Home.vue'
 import Message from '../components/Message.vue'
+import Profil from '../components/Profil.vue'
+import OneMessage from '../components/OneMessage.vue'
 
 Vue.use(VueRouter)
 
@@ -30,6 +32,16 @@ const routes = [
     path: '/message/',
     name: 'Message',
     component: Message
+  },
+  {
+    path: '/message/:id',
+    name: 'OneMessage',
+    component: OneMessage
+  },
+  {
+    path: '/profil/:id',
+    name: 'Profil',
+    component: Profil
   }
 ]
 

@@ -43,7 +43,7 @@ exports.signup = (req, res, next) => {
                     email: req.body.email,
                     password: hash,
                     name: req.body.name,
-                    bio: '',
+                    bio: 'Veuillez compléter votre profil...',
                     isAdmin: 0,
                     avatar: "http://localhost:3000/images/avatar-default.png"
                 })
@@ -59,6 +59,7 @@ exports.signup = (req, res, next) => {
 
 exports.login = (req, res, next) => {
     models.User.findOne({ 
+        attributes: ['email', 'userId', 'password', 'isAdmin'],
         where: { email: req.body.email }
     })
     .then((userFound) => {
@@ -70,6 +71,7 @@ exports.login = (req, res, next) => {
                 }
                 res.status(200).json({
                     userId: userFound.userId,
+                    isAdmin: userFound.isAdmin,
                     token: jwt.sign(
                         { userId: userFound.userId },
                         process.env.TOKEN, // Encodage du token via la variable d'environnement contenu dans le .env
@@ -87,7 +89,7 @@ exports.login = (req, res, next) => {
 
 exports.viewProfil = (req, res, next) => {
     models.User.findOne({
-        attributes: ['name', 'email', 'bio', 'avatar', 'isAdmin'],
+        attributes: ['name', 'email', 'bio', 'avatar', 'isAdmin', 'userId'],
         where: { userId: req.params.userId }
     })
     .then((userFound) => {

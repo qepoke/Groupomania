@@ -31,7 +31,7 @@ module.exports = {
       bio: {
         allowNull: true,
         type: Sequelize.TEXT,
-        defaultValue: ''
+        defaultValue: 'Veuillez compléter votre profil...'
       },
       avatar: {
         allowNull: false,

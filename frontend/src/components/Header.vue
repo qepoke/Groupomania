@@ -1,4 +1,5 @@
 <template>
+<v-container class="mb-4">
   <v-card
     class="mx-auto overflow-hidden"
   >
@@ -10,8 +11,7 @@
       prominent
       src="https://picsum.photos/1920/1080?random"
       fade-img-on-scroll
-      scroll-target="#scrolling-techniques-5"
-      scroll-threshold="500"
+      
     >
       <template v-slot:img="{ props }">
         <v-img
@@ -32,42 +32,16 @@
         value
       ></v-text-field>
        </v-col>
-      <v-btn v-if="$store.state.isUserLoggedIn"
-        absolute
-        dark
-        fab
-        bottom
-        right
-        class="mb-4"
-        color="red"
-        @click="dialog = !dialog"
-      >
-        <v-icon>mdi-plus</v-icon>
-      </v-btn>
+    
     </v-app-bar>
     <v-sheet
       id="scrolling-techniques-5"
       class="overflow-y-auto"
       max-height="128"
     >
-      <v-container style="height: 1500px;"></v-container>
+      
     </v-sheet>
-    <v-dialog v-if="$store.state.isUserLoggedIn" v-model="dialog" max-width="500px">
-      <v-card>
-        <v-card-title>Veuillez écrire votre message</v-card-title>
-        <v-card-text>
-          <v-textarea auto-grow counter clearable placeholder="Votre message" v-model="content"></v-textarea>
-
-          <small class="grey--text">* Veuillez entrer un message compris entre 12 et 500 caractères</small>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer></v-spacer>
-
-          <v-btn text color="primary" @click="dialog = false, postMessage()">Envoyer</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    
 
     <v-navigation-drawer
       v-model="drawer"
@@ -88,7 +62,7 @@
             <v-list-item-title>Accueil</v-list-item-title>
           </v-list-item>
 
-          <v-list-item v-if="$store.state.isUserLoggedIn">
+          <v-list-item v-if="$store.state.isUserLoggedIn" @click="profil()">
             <v-list-item-icon>
               <v-icon>mdi-account</v-icon>
             </v-list-item-icon>
@@ -128,15 +102,11 @@
         </v-list-item-group>
       </v-list>
     </v-navigation-drawer>
-    
-    
   </v-card>
+</v-container>
 </template>
 
 <script>
-
-import axios from 'axios'
-import store from '../store/index.js'
 
 export default {
     name: 'Header',
@@ -149,6 +119,7 @@ export default {
         logout() {
             this.$store.dispatch('setToken', null)
             this.$store.dispatch('setUser', null)
+            this.$store.dispatch('setAdmin', false)
             this.$router.push('/')
         },
         signup() {
@@ -161,30 +132,17 @@ export default {
             this.$router.push('/')
         },
         message() {
+          if (this.$route.path == `/message`) {
+            window.location.reload()
+          } else
             this.$router.push('/message')
         },
-        postMessage() {
-          axios.post('http://localhost:3000/message', {
-            
-            content: this.content,
-            userId: store.state.userId },
-           { 
-            headers: {
-                Authorization: `Bearer ${store.state.token}`
-            },
-          })
-          .then(() => {
-              axios.get('http://localhost:3000/message', {
-              headers: {
-                Authorization: `Bearer ${store.state.token}`
-              }  
-              })
-              this.$router.push('/message')
-          }) 
-          .catch(error => {
-              // Handle error.
-              console.log('An error occurred:', error.response);
-            })
+        profil() {
+          if (this.$route.path == `/profil/${this.$store.state.userId}`) {
+            window.location.reload()
+          } else {
+            this.$router.push(`/profil/${this.$store.state.userId}`)
+          }
         }
     }
 }

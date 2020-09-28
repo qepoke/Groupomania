@@ -24,14 +24,6 @@ module.exports = {
           key: 'msgId'
         }
       },
-      commentId:{
-        allowNull: true,
-        type: Sequelize.INTEGER,
-        references: {
-          model:'Comments',
-          key: 'commentId'
-        }
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
