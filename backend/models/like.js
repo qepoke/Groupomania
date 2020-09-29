@@ -11,8 +11,8 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      models.User.belongsTo(models.Message, {foreignKey: "msgId", onDelete: 'CASCADE', allowNull: false });
-      models.User.belongsTo(models.Message, {foreignKey: "userId", onDelete: 'CASCADE', allowNull: false});
+      models.Like.belongsTo(models.User, { foreignKey: "userId", onDelete: 'CASCADE'});
+      models.Like.belongsTo(models.Message, { foreignKey: 'msgId', onDelete: 'CASCADE'});
     }
   };
   Like.init({
@@ -21,8 +21,12 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true
     },
-    userId: DataTypes.INTEGER,
-    msgId: DataTypes.INTEGER
+    msgId: {
+      type: DataTypes.INTEGER
+    },
+    userId: {
+      type: DataTypes.INTEGER
+    }
   }, {
     sequelize,
     modelName: 'Like',

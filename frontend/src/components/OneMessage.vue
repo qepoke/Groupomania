@@ -130,7 +130,7 @@
               
             <v-card-title>
               <v-list-item>
-                <router-link :to="`/profil/${message.User.userId}`">
+                <router-link :to="`/profil/${message.userId}`">
                   <v-list-item-avatar outlined color="grey darken-3">
                       <v-img
                           :src="message.User.avatar"
@@ -159,7 +159,7 @@
             <v-btn icon color="grey" v-else-if="!userLikeSearch" @click="liked()">
             <v-icon class="mr-1">mdi-thumb-up</v-icon>
             </v-btn>
-            <span class="subheading mr-2 mt-1">{{ likeCount.count }}</span>
+            <span class="subheading mr-2 mt-1">{{ totalLikes }}</span>
             <span class="mr-3">·</span>
             <v-btn icon color="black" @click="dialog2 = !dialog2"
             >
@@ -342,9 +342,9 @@ import Swal from 'sweetalert2'
         dialog2: false,
         dialog3: false,
         id: this.$route.params.id,
-        likeCount: [],
         usersLiked: [],
         userLikeSearch: false,
+        totalLikes: '',
       }
     },
     methods: {
@@ -360,7 +360,6 @@ import Swal from 'sweetalert2'
           })
           .then((comment) => {
               console.log(comment)
-              // this.allMessages.unshift(message)
               this.allComments = []
               this.comment = ''
               
@@ -387,6 +386,7 @@ import Swal from 'sweetalert2'
           })
         },
         liked() {
+          this.usersLiked = []
           axios.post(`http://localhost:3000/message/${this.id}/like`, {
             
             userId: store.state.userId,
@@ -396,57 +396,68 @@ import Swal from 'sweetalert2'
                 Authorization: `Bearer ${store.state.token}`
             },
           })
-          .then(()=>{
-             axios.get(`http://localhost:3000/message/${this.id}`, {
-                headers: {
-              Authorization: `Bearer ${store.state.token}`
+          .then(() => {
+            axios.get(`http://localhost:3000/message/${this.id}/like`, {
+            headers: {
+                Authorization: `Bearer ${store.state.token}`
             }
             })
-            .then(message => {
-                this.message = message.data.message
-                this.likeCount = message.data.likeCount
-                this.usersLiked.push(this.$store.state.userId)
-                
+            .then(response => {
+                console.log(response)
+                this.totalLikes = response.data.likes.count
+                response.data.likes.rows.forEach(rows => {
+                  
+                  this.usersLiked.push(rows.userId);
+                })
                 if(this.usersLiked.indexOf(this.$store.state.userId) === -1) {
-                    this.userLikeSearch = false
+                  this.userLikeSearch = false
                 } else {
-                    this.userLikeSearch = true
+                  this.userLikeSearch = true
                 }
-            })
-          })       
+            })      
             .catch(error => {
-                console.log('An error occurred:', error.response);
+              console.log('An error occurred:', error.response);
             })
+          }) 
+          .catch(error => {
+            console.log('An error occurred:', error.response);
+          })
 
         },
         disliked() {
+          this.usersLiked = []
           axios.delete(`http://localhost:3000/message/${this.id}/like`, {
             headers: {
                 Authorization: `Bearer ${store.state.token}`
             },
           })
-            .then(()=>{
-                axios.get(`http://localhost:3000/message/${this.id}`, {
-                headers: {
+          .then(() => {
+            axios.get(`http://localhost:3000/message/${this.id}/like`, {
+            headers: {
                 Authorization: `Bearer ${store.state.token}`
-                }
-                })
-                .then(message => {
-                    this.message = message.data.message
-                    this.likeCount = message.data.likeCount
-                    this.usersLiked.pop()
-                   
-                    
-                    if(this.usersLiked.indexOf(this.$store.state.userId) === -1) {
-                        this.userLikeSearch = false
-                    } else {
-                        this.userLikeSearch = true
-                    }
-                })
-          })       
-            .catch(error => {
-                console.log('An error occurred:', error.response);
+            }
             })
+            .then(response => {
+                console.log(response)
+                this.totalLikes = response.data.likes.count
+                
+                response.data.likes.rows.forEach(rows => {
+                  this.usersLiked.push(rows.userId);
+                })
+                if(this.usersLiked.indexOf(this.$store.state.userId) === -1) {
+                  this.userLikeSearch = false
+                } else {
+                  this.userLikeSearch = true
+                }
+            })      
+            .catch(error => {
+              console.log('An error occurred:', error.response);
+            })
+          }) 
+          .catch(error => {
+            console.log('An error occurred:', error.response);
+          })
+
 
         },
         allMessages(){
@@ -466,7 +477,9 @@ import Swal from 'sweetalert2'
             if (result.isConfirmed) {
               Swal.fire({
                 title: 'Message supprimé!',
-                icon: 'success'
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 1000
               })
             axios.delete(`http://localhost:3000/message/${this.id}`, {
                   headers: {
@@ -528,7 +541,9 @@ import Swal from 'sweetalert2'
             if (result.isConfirmed) {
               Swal.fire({
                 title: 'Commentaire supprimé!',
-                icon: 'success'
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 1000
               })
               axios.delete('http://localhost:3000/message/' + `${this.id}` + '/comment/' + commentId, {
                   headers: {
@@ -601,40 +616,52 @@ import Swal from 'sweetalert2'
             headers: {
               Authorization: `Bearer ${store.state.token}`
             }
-        })
+         })
           .then(message => {
               console.log(message.data)
               this.message = message.data.message
-              this.likeCount = message.data.likeCount
-              message.data.likeCount.rows.forEach(rows => {
-                this.usersLiked.push(rows.userId);
-            })
-              
-              if(this.usersLiked.indexOf(this.$store.state.userId) === -1) {
-                this.userLikeSearch = false
-            } else {
-                this.userLikeSearch = true
-            }
-        })
-        .then(() => {
-              axios.get(`http://localhost:3000/message/${this.id}/comment`, {
-              headers: {
-                  Authorization: `Bearer ${store.state.token}`
-              }
-              })
-              .then(response => {
-                  console.log(response)
-                  for(const comment of response.data.comments){
-                      this.allComments.push(comment)
-                  }
-              })      
-              .catch(error => {
-                console.log('An error occurred:', error.response);
-              })
-        }) 
-        .catch(error => {
-          console.log('An error occurred:', error.response);
-        })
+          })
+          .then(() => {
+                axios.get(`http://localhost:3000/message/${this.id}/comment`, {
+                headers: {
+                    Authorization: `Bearer ${store.state.token}`
+                }
+                })
+                .then(response => {
+                    console.log(response)
+                    for(const comment of response.data.comments){
+                        this.allComments.push(comment)
+                    }
+                })      
+                .catch(error => {
+                  console.log('An error occurred:', error.response);
+                })
+          })
+          .then(() => {
+                axios.get(`http://localhost:3000/message/${this.id}/like`, {
+                headers: {
+                    Authorization: `Bearer ${store.state.token}`
+                }
+                })
+                .then(response => {
+                    console.log(response)
+                    this.totalLikes = response.data.likes.count
+                    response.data.likes.rows.forEach(rows => {
+                      this.usersLiked.push(rows.userId);
+                    })
+                    if(this.usersLiked.indexOf(this.$store.state.userId) === -1) {
+                      this.userLikeSearch = false
+                    } else {
+                      this.userLikeSearch = true
+                    }
+                })      
+                .catch(error => {
+                  console.log('An error occurred:', error.response);
+                })
+          }) 
+          .catch(error => {
+            console.log('An error occurred:', error.response);
+          })
     }
 }
 </script>

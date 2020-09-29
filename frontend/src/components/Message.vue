@@ -71,18 +71,19 @@
 
       <v-card-actions>
         <v-list-item class="justify-end">
-            <v-btn icon color="red" @click="disliked()">
+          <router-link :to="`/message/${message.msgId}`">
+            <v-btn icon color="red">
             <v-icon class="mr-1">mdi-thumb-up</v-icon>
             </v-btn>
-            <v-btn icon color="grey"  @click="liked()">
-            <v-icon class="mr-1">mdi-thumb-up</v-icon>
-            </v-btn>
-            <span class="subheading mr-2 mt-1"></span>
+          </router-link>
+            <span class="subheading mr-2 mt-1">{{ totalLikes[index] }}</span>
             <span class="mr-3">·</span>
+          <router-link :to="`/message/${message.msgId}`">
             <v-btn icon color="black">
             <v-icon class="mr-1">mdi-chat-plus</v-icon>
             </v-btn>
-            <span class="subheading"></span>
+          </router-link>
+            <span class="subheading">{{ totalComments[index] }}</span>
         </v-list-item>
       </v-card-actions>
     </v-card>
@@ -109,8 +110,10 @@ import Swal from 'sweetalert2'
         content: '',
         dialog: false,
         fab: false,
-        usersLiked: []
-
+        usersLiked: [],
+        totalLikes: [],
+        totalComments: [],
+        messagesId: []
       }
     },
     methods: {
@@ -124,31 +127,72 @@ import Swal from 'sweetalert2'
                 Authorization: `Bearer ${store.state.token}`
             },
           })
-          .then((message) => {
-              console.log(message)
-              // this.allMessages.unshift(message)
-              this.allMessages = []
-              this.content = ''
+          .then(() => {
               Swal.fire({
                 icon: 'success',
                 title: 'Message posté',
                 showConfirmButton: false,
                 timer: 1500
               })
-              axios.get('http://localhost:3000/message', {
-                headers: {
-                    Authorization: `Bearer ${store.state.token}`
-                }
-              })
-              .then(response => {
-                  console.log(response)
-                  for(const message of response.data.messages){
-                      this.allMessages.push(message)
-                  }
-              })      
-          }) 
+              window.location.reload()
+              // axios.get('http://localhost:3000/message', {
+              //   headers: {
+              //       Authorization: `Bearer ${store.state.token}`
+              //   }
+              // })
+              // .then(response => {
+              //     console.log(response)
+              //     for(const message of response.data.messages){
+              //       this.allMessages.push(message)
+              //     }
+              //     this.allMessages.forEach(message => {
+                    
+              //       this.messagesId.push(message.msgId)
+              //     })
+              //     for(let i=0;i<this.messagesId.length;i++){
+                    
+              //       axios.get(`http://localhost:3000/message/${this.messagesId[i]}/like`, {
+              //         headers: {
+              //           Authorization: `Bearer ${store.state.token}`
+              //         }
+              //         })
+              //         .then(response => {
+              //             console.log(response)
+                          
+              //             this.totalLikes.push(response.data.likes.count)
+              //           // response.data.likes.rows.forEach(rows => {
+              //             this.usersLiked = []
+              //             this.usersLiked.push(response.data.likes.rows);
+              //             // })
+              //             // if(this.usersLiked.indexOf(this.$store.state.userId) === -1) {
+              //             //   this.userLikeSearch = false
+              //             // } else {
+              //             //   this.userLikeSearch = true
+              //             // }
+              //         })
+              //         .then(() => {
+              //               axios.get(`http://localhost:3000/message/${this.messagesId[i]}/comment`, {
+              //                 headers: {
+              //                   Authorization: `Bearer ${store.state.token}`
+              //                 }
+              //               })
+              //               .then(response => {
+              //                 console.log(response)
+                              
+              //                 this.totalComments.push(response.data.comments.length)
+              //               })      
+              //               .catch(error => {
+              //                 console.log('An error occurred:', error.response);
+              //               })
+              //         })     
+              //         .catch(error => {
+              //           console.log('An error occurred:', error.response);
+              //         })
+              //     }    
+          })   
           .catch(error => {
-              console.log('An error occurred:', error.response);
+            // Handle error.
+            console.log('An error occurred:', error.response)
           })
         }
     },
@@ -161,21 +205,49 @@ import Swal from 'sweetalert2'
           .then(response => {
               console.log(response)
               for(const message of response.data.messages){
-                  this.allMessages.push(message)
+                this.allMessages.push(message)
               }
-              response.data.likeCount.rows.forEach(rows => {
-                this.usersLiked.push(rows.msgId);
-            })
-
-              
-              if(this.usersLiked.indexOf(this.$store.state.userId) === -1) {
-                this.userLikeSearch = false
-            } else {
-                this.userLikeSearch = true
-            }
-          })
-            // Handle success.
-              
+              this.allMessages.forEach(message => {
+                this.messagesId.push(message.msgId)
+              })
+              for(let i=0;i<this.messagesId.length;i++){
+                
+                axios.get(`http://localhost:3000/message/${this.messagesId[i]}/like`, {
+                  headers: {
+                    Authorization: `Bearer ${store.state.token}`
+                  }
+                  })
+                  .then(response => {
+                      console.log(response)
+                      this.totalLikes.push(response.data.likes.count)
+                    // response.data.likes.rows.forEach(rows => {
+                      this.usersLiked.push(response.data.likes.rows);
+                      // })
+                      // if(this.usersLiked.indexOf(this.$store.state.userId) === -1) {
+                      //   this.userLikeSearch = false
+                      // } else {
+                      //   this.userLikeSearch = true
+                      // }
+                  })
+                  .then(() => {
+                        axios.get(`http://localhost:3000/message/${this.messagesId[i]}/comment`, {
+                          headers: {
+                            Authorization: `Bearer ${store.state.token}`
+                          }
+                        })
+                        .then(response => {
+                          console.log(response)
+                          this.totalComments.push(response.data.comments.length)
+                        })      
+                        .catch(error => {
+                          console.log('An error occurred:', error.response);
+                        })
+                  })     
+                  .catch(error => {
+                    console.log('An error occurred:', error.response);
+                  })
+              }    
+          })   
           .catch(error => {
             // Handle error.
             console.log('An error occurred:', error.response);

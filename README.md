@@ -1,6 +1,6 @@
 # Projet n°7 : Création d'un réseau social d'entreprise
 
-# Parcous Développeur Web : OPENCLASSROOMS
+# Parcours Développeur Web : OPENCLASSROOMS
 
 
 ## Comment démarrer le projet ?
@@ -31,6 +31,15 @@
 
 9) Ouvez votre navigateur et allez à l'adresse `http://localhost:8080`
 
+10) Plusieurs utilisateurs sont disponibles :
+
+        admin@test.fr
+        quentin@test.fr
+        thomas@test.fr
+
+    Le mot de passe de chaque utilisateur est : `Azerty123`
+
+    
 --------------------------------------
 
 

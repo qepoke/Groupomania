@@ -19,17 +19,8 @@ exports.allMessages = (req, res, next) => {
         ],
         order: [['createdAt', 'DESC']]
     })
-    .then((messages) => {        
-        messages.forEach(message => {
-            models.Like.findAndCountAll({
-                attributes: ['userId', 'msgId'],
-                order: [['msgId']] 
-            })
-            .then((likeCount) => res.status(200).json({likeCount, messages}))
-            .catch(() => res.status(500).json({ error: "Impossible de récupérer les likes"}))     
-        })
-    })
-    .catch(() => res.status(400).json({ error:  'Erreur de la base de données, impossible de récupérer les messages' }))
+    .then((messages) => res.status(200).json({ messages }))   
+    .catch(() => res.status(400).json({ error:  'Erreur de la base de données, impossible de récupérer les messages' }))  
 }
 
 exports.viewMessage = (req, res, next) => {
@@ -39,25 +30,12 @@ exports.viewMessage = (req, res, next) => {
         include: [{
             model: models.User,
             attributes: ['name', 'userId', 'avatar']
-            },
-            {
-            model: models.Comment,
-            attributes: ['comment', 'userId', 'createdAt']
-            },
-            {
-            model: models.Like,
-            attributes: ['likeId', 'userId', 'msgId'],
             }
         ],
     })
     .then((message) => {
         if (message) {
-        models.Like.findAndCountAll({
-            attributes: ['userId'],
-            where: { msgId: req.params.msgId}
-        })
-        .then((likeCount) => res.status(200).json({likeCount, message}))
-        .catch(error => res.status(500).json({ error: "Impossible de récupérer les likes"}))
+         res.status(200).json({message})
         } else {
           res.status(404).json({ error: 'Ce message n\'existe pas' })
         }
@@ -82,7 +60,7 @@ exports.createMessage = (req, res, next) => {
 }
 
 exports.editMessage = (req, res, next) => {
-    
+
     models.Message.findOne({
         where: { msgId: req.params.msgId },
         include: [{
@@ -229,4 +207,15 @@ exports.deleteLike = (req, res, next) => {
         res.status(500).json({ error: 'Impossible de voir le message' })
     })
         
+}
+
+exports.allLikes = (req, res, next) => {
+
+        models.Like.findAndCountAll({
+            attributes: ['likeId', 'userId', 'msgId'],
+            where: { 'msgId': req.params.msgId},
+            
+        })
+        .then((likes) => res.status(200).json({likes}))
+        .catch(error => res.status(500).json({ error: "Impossible de récupérer les likes"}))
 }
