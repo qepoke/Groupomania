@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 
 const userRoutes = require('./routes/user');
 const msgRoutes = require('./routes/message');
+const commentRoutes = require('./routes/comment');
 //const commentRoutes = require('./routes/comment');
 const path = require('path'); //Plugin permettant d'accéder au path du serveur
 const helmet = require('helmet'); //Plugin assurant un niveau de sécurité élevé. Possèdant 11 middlewares, il sécurise entre autres les requêtes, les Headers, et empêche le sniffing.
@@ -38,7 +39,7 @@ db
  
  app.use('/', userRoutes);
  app.use('/', msgRoutes);
- //app.use('/', commentRoutes);
+ app.use('/', commentRoutes);
  //app.use('/', likeRoutes);
 
 

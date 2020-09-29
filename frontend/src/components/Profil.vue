@@ -1,12 +1,12 @@
 <template>
-    <v-container fluid class="mb-4">
+    <v-container fluid fill-height class="mb-4 mt-5">
         <v-row  justify="center">
           <v-col
             cols="12"
             sm="12"
             md="8"
           >
-            <v-card >
+            <v-card id="app">
                 <v-card-text  align="center" dark >
                     
                         <v-list-item>
@@ -202,3 +202,9 @@ import Swal from 'sweetalert2'
     },
 }
 </script>
+<style scoped>
+
+#app{
+  margin-top: 50px;
+}
+</style>

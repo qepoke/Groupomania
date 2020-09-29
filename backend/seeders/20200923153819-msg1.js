@@ -5,7 +5,6 @@ module.exports = {
     return queryInterface.bulkInsert('Messages', [{
       userId: 1,
       content: 'Bonjour et bienvenue sur le nouveau réseau social de l\'entreprise',
-      like: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     }]);

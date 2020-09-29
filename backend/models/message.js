@@ -22,9 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true // Automatically gets converted to SERIAL for postgres
     },
-    createdAt: DataTypes.DATE(2),
     content: DataTypes.TEXT,
-    like: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'Message',

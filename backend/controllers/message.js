@@ -11,7 +11,7 @@ const getUserId = (req) => {
 
 exports.allMessages = (req, res, next) => {
     models.Message.findAll({
-        attributes: ['content', 'createdAt', 'msgId', 'userId', 'like'],
+        attributes: ['content', 'createdAt', 'msgId', 'userId'],
         include: [{
             model: models.User,
             attributes: ['name', 'userId', 'avatar']
@@ -19,8 +19,17 @@ exports.allMessages = (req, res, next) => {
         ],
         order: [['createdAt', 'DESC']]
     })
-    .then((messages) => res.status(200).json({ messages }))
-    .catch((error) => res.status(400).json({ error:  'Erreur de la base de données, impossible de récupérer les messages' }))
+    .then((messages) => {        
+        messages.forEach(message => {
+            models.Like.findAndCountAll({
+                attributes: ['userId', 'msgId'],
+                order: [['msgId']] 
+            })
+            .then((likeCount) => res.status(200).json({likeCount, messages}))
+            .catch(() => res.status(500).json({ error: "Impossible de récupérer les likes"}))     
+        })
+    })
+    .catch(() => res.status(400).json({ error:  'Erreur de la base de données, impossible de récupérer les messages' }))
 }
 
 exports.viewMessage = (req, res, next) => {
@@ -73,16 +82,7 @@ exports.createMessage = (req, res, next) => {
 }
 
 exports.editMessage = (req, res, next) => {
-    /*
-    Fonction de changement de photo de profil en cours
-    */ 
-
-    // const avatar = req.body.avatar
-    // const userObject = req.file ?
-    //     {
-    //     ...JSON.parse(req.body.user),
-    //     avatar: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    //     } : { ...req.body };
+    
     models.Message.findOne({
         where: { msgId: req.params.msgId },
         include: [{
@@ -173,7 +173,9 @@ exports.postLike = (req, res, next) => {
                         userId : getUserId(req),
                         msgId : req.params.msgId
                     })
-                    .then((message) => res.status(201).json({ message: "Like posté" }))
+                    .then(() => {
+                        res.status(201).json({ message: "Like posté" })
+                    })
                     .catch((error) => res.status(400).json({ error:  'Erreur de la base de données, impossible de posté le like' }))
                 } else {
                   res.status(404).json({ error: 'Vous avez déjà liké' })
@@ -228,51 +230,3 @@ exports.deleteLike = (req, res, next) => {
     })
         
 }
-
-// exports.deleteLike = (req, res, next) => {
-//     models.Like.findOne({
-//         attributes: ['userId', 'msgId'],
-//         where: { msgId: req.params.msgId },
-//         include: [{
-//             model: models.User,
-//             attributes: ['name', 'userId', 'avatar']
-//             },
-//             {
-//             model: models.Comment,
-//             attributes: ['comment', 'userId', 'createdAt']
-//             },
-//             {
-//             model: models.Like,
-//             attributes: ['likeId', 'userId', 'msgId']
-//             }
-//         ],
-//     })
-//     .then((msgFound) => {
-//         if (msgFound) {
-//           res.status(200).json(msgFound);
-//         } else {
-//           res.status(404).json({ error: 'Ce message n\'existe pas' })
-//         }
-//     })
-//     .catch((error) => {
-//         res.status(500).json({ error: 'Impossible de voir le message' })
-//     })
-//         models.Message.decrement({
-//             'like' : 1,
-//             include: [{
-//                 model: models.Like,
-//                 attributes: ['userId']
-//                 }
-//             ],
-//             content: req.body.content,
-//             userId : getUserId(req)
-            
-//         })
-//         .then((msgLiked) => { 
-//             res.status(201).json({ message: 'Message liké'})
-
-//         })
-//         .catch((error) => {
-//             res.status(500).json({ error: 'Impossible de liké le message' })
-//         })
-// }

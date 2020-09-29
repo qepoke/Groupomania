@@ -1,11 +1,11 @@
 <template>
-  <div id="pad">
-    <v-btn v-if="$store.state.isUserLoggedIn"
+  <div class="pad">
+    <v-btn  v-if="$store.state.isUserLoggedIn"
         absolute
         dark
         fab
-        class="mt-3"
-        right
+        class="mt-3 pad"
+        left
         color="red"
         @click="dialog = !dialog"
         >
@@ -31,7 +31,7 @@
     <v-container v-bind:key="index" v-for="(message, index) in allMessages">
       
       <v-row align="center" justify="center" >
-        <v-col cols="12" md="10" lg="10">
+        <v-col cols="12" md="8" lg="8">
           <v-card class="elevation-12" color="#26c6da">
             <router-link :to="`/message/${message.msgId}`">
             <v-btn
@@ -108,7 +108,8 @@ import Swal from 'sweetalert2'
         allMessages: [],
         content: '',
         dialog: false,
-        fab: false
+        fab: false,
+        usersLiked: []
 
       }
     },
@@ -162,6 +163,16 @@ import Swal from 'sweetalert2'
               for(const message of response.data.messages){
                   this.allMessages.push(message)
               }
+              response.data.likeCount.rows.forEach(rows => {
+                this.usersLiked.push(rows.msgId);
+            })
+
+              
+              if(this.usersLiked.indexOf(this.$store.state.userId) === -1) {
+                this.userLikeSearch = false
+            } else {
+                this.userLikeSearch = true
+            }
           })
             // Handle success.
               
@@ -170,12 +181,13 @@ import Swal from 'sweetalert2'
             console.log('An error occurred:', error.response);
           })
     },
+
 }
 </script>
 
 <style scoped>
  
-#pad{
+.pad{
   margin-top: 80px;
   margin-bottom: 30px;
 }
@@ -184,5 +196,17 @@ import Swal from 'sweetalert2'
 }
 .v-divider{
     margin:0;
+}
+.v-card__actions{
+  padding: 0 !important;
+}
+.v-list-item{
+  padding: 0 5px !important;
+}
+.v-list-item__content{
+  padding: 5px 0px !important;
+}
+.container{
+  padding-bottom: 0 !important;
 }
 </style>

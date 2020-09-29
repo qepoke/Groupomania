@@ -20,11 +20,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.TEXT
       },
-      like:{
-        allowNull: false,
-        defaultValue: 0,
-        type: Sequelize.INTEGER
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE(1)

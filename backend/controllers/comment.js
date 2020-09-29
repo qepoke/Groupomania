@@ -1,131 +1,101 @@
 const models = require('../models');
 const jwt = require('jsonwebtoken');
-require('dotenv').config();                      // Should not have spaces
+require('dotenv').config();
 
-
-exports.signup = (req, res, next) => {
-    if (!mailValidator.validate(req.body.email)){ // Si l'email n'est pas valide
-        res.status(401).json({ message: "Merci de bien vouloir entrer une adresse email valide !" }) // Ajouter un sweet alert
-    } 
-    if (req.body.name.length >= 15 || req.body.name.length <= 4){ // Si un pseudo est bien renseigné
-        res.status(401).json({ message: "Merci de renseigner un pseudo entre 5 et 14 caractères !" }) 
-    } 
-    if(!schema.validate(req.body.password)) { // Si le password n'est pas valide
-        res.status(401).json({ message: "Veuillez choisir un mot de passe fort, entre 8 et 40 caractères contenant au moins un caractère majuscule et un minuscule, 2 chiffres et sans espaces."})
-    }
-    models.User.findOne({
-        attributes: ['email'],
-        where: { email: req.body.email }
-    })
-    .then((userFound) => {
-        if (!userFound) {
-            bcrypt.hash(req.body.password, 10) // 10 salage du password
-            .then(hash => {
-                const newUser = models.User.create ({
-                    email: req.body.email,
-                    password: hash,
-                    name: req.body.name,
-                    bio: '',
-                    isAdmin: 0
-                })
-                .then((newUser) => res.status(201).json({ message: 'Utilisateur créé avec l\'id ' + newUser.id }))
-                .catch(error => res.status(400).json({ error }));     
-            })    
-        } else {
-            return res.status(409).json({ error: 'L \'utilisateur existe déjà'})
-        }
-    })
-    .catch(error => res.status(500).json({ error }))         
+const getUserId = (req) => {
+    const token = req.headers.authorization.split(' ')[1];
+    const decodedToken = jwt.verify(token, process.env.TOKEN);
+    const userId = decodedToken.userId;
+    return userId;
 }
 
-exports.login = (req, res, next) => {
-    models.User.findOne({ 
-        where: { email: req.body.email }
+exports.allComments = (req, res, next) => {
+    models.Comment.findAll({
+        attributes: ['comment', 'createdAt', 'msgId', 'userId', 'commentId'],
+        where: { msgId: req.params.msgId },
+        include: [{
+            model: models.User,
+            attributes: ['name', 'userId', 'avatar']
+            },
+        ],
+        order: [['createdAt', 'ASC']]
     })
-    .then((userFound) => {
-        if (userFound) {
-            bcrypt.compare(req.body.password, userFound.password)
-            .then(valid => {
-                if (!valid) {
-                return res.status(401).json({ error: 'Mot de passe incorrect !' })
-                }
-                res.status(200).json({
-                    userId: userFound.id,
-                    token: jwt.sign(
-                        { userId: userFound.id },
-                        process.env.TOKEN, // Encodage du token via la variable d'environnement contenu dans le .env
-                        { expiresIn: '3h' } // Expiration de la connexion au bout de 3h
-                    )
-                })
+    .then((comments) => res.status(200).json({comments}))
+    .catch(error => res.status(500).json({ error: "Impossible de récupérer les commentaires"}))
+}
+
+exports.postComment = (req, res, next) => {
+    models.Comment.create({
+        include: [{
+            model: models.User,
+            attributes: ['name', 'userId', 'avatar']
+            }
+        ],
+        comment: req.body.comment,
+        userId : getUserId(req),
+        msgId : req.params.msgId
+    })
+    .then((comment) => res.status(201).json({ comment }))
+    .catch((error) => res.status(400).json({ error:  'Erreur de la base de données, impossible de posté le commentaire' }))
+}
+
+exports.updateComment = (req, res, next) => {
+
+    models.Comment.findOne({
+        attributes: ['userId', 'commentId', 'msgId'],
+        where: { commentId: req.params.commentId }
+    })
+    .then((commentFound) => {
+        if (commentFound) {
+            models.User.findOne({
+                attributes: [ 'isAdmin' ],
+                where: { userId: getUserId(req) }
             })
-            .catch(error => res.status(500).json({ error }))
+            .then((userIsAdmin) => {
+                if ((getUserId(req) == commentFound.userId) || (userIsAdmin.dataValues.isAdmin == true)) {
+                    models.Comment.update(req.body, {
+                        attributes: [ 'comment' ],
+                        where: { commentId: req.params.commentId }
+                    })
+                    .then(() => res.status(201).json({ message: 'Commentaire modifié'}))
+                    .catch((error) => res.status(500).json ({ error }))
+                } else {
+                    res.status(401).json({ error: 'Vous n\'êtes pas autorisé à modifier le commentaire' })
+                }
+            })
+            .catch((error) => res.status(500).json({ error: 'Impossible de communiquer avec la base de données' }))
         } else {
-            return res.status(404).json({ error: 'Utilisateur non trouvé !' })
-        }    
-    })
-    .catch(error => res.status(500).json({ error }))
-}
-
-exports.viewProfil = (req, res, next) => {
-    models.User.findOne({
-        attributes: ['name', 'email', 'bio', 'avatar'],
-        where: { id: req.params.id }
-    })
-    .then((userFound) => {
-        if (userFound) {
-          res.status(201).json(user);
-        } else {
-          res.status(404).json({ error: 'Utilisateur non trouvé' })
+        res.status(404).json({ error: 'Commentaire non trouvé' })
         }
     })
-    .catch((error) => {
-        res.status(500).json({ error: 'Impossible de voir le profil' })
-    })
+    .catch((error) => res.status(500).json({ error: 'Impossible de modifier le commentaire' }))
 }
 
-exports.editProfil = (req, res, next) => {
-    /*
-    Fonction de changement de photo de profil en cours
-    */ 
-
-    // const avatar = req.body.avatar
-    // const userObject = req.file ?
-    //     {
-    //     ...JSON.parse(req.body.user),
-    //     avatar: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    //     } : { ...req.body };
-    models.User.findOne({
-        where: { id: req.params.id }
+exports.deleteComment = (req, res, next) => {
+    models.Comment.findOne({
+        where: { commentId: req.params.commentId }
     })
-    .then((userFound) => {
-        if (userFound) {
-            models.User.update(req.body, {
-                attributes: [ 'bio', 'avatar'],
-                where: { id: req.params.id }
-              })
-              .then(() => res.status(201).json({ message: 'Profil mis à jour'}))
-              .catch((error) => res.status(500).json ({ error }))
+    .then((commentFound) => {
+        if (commentFound) {
+            models.User.findOne({
+                attributes: [ 'isAdmin' ],
+                where: { userId: getUserId(req) }
+            })
+            .then((userIsAdmin) => {
+                if ((getUserId(req) == commentFound.userId) || (userIsAdmin.dataValues.isAdmin == true)) {
+                    models.Comment.destroy({
+                        where: { commentId: req.params.commentId }
+                    })
+                    .then(() => res.status(201).json({ message: 'Commentaire supprimé'}))
+                    .catch((error) => res.status(404).json({ error })) 
+                } else {
+                    res.status(401).json({ error: 'Vous n\'êtes pas autorisé à supprimer le commentaire' })
+                }
+            })
+            .catch((error) => res.status(500).json({ error: 'Impossible de communiquer avec la base de données' }))  
         } else {
-          res.status(404).json({ error: 'Utilisateur non trouvé' })
+            res.status(404).json({ error: 'Commentaire non trouvé' })
         }
     })
-    .catch((error) => {
-        res.status(500).json({ error: 'Impossible de mettre à jour le profil' })
-    })
-}
-
-exports.deleteProfil = (req, res, next) => {
-    models.User.destroy({
-        where: { id: req.params.id }
-    })
-    .then((userFound) => {
-        if (userFound) {
-          res.status(201).json({ message: 'Compte supprimé'})
-        } else {
-          res.status(404).json({ error: 'Utilisateur non trouvé' })
-        }
-    })
-    .catch((error) => {
-        res.status(500).json({ error: 'Impossible de supprimer le compte' })
-    })
+    .catch((error) => res.status(500).json({ error: 'Impossible de supprimer le commentaire' }))
 }

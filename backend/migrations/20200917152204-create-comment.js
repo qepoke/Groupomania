@@ -25,12 +25,8 @@ module.exports = {
         }
       },
       comment: {
-        type: Sequelize.STRING
-      },
-      like:{
         allowNull: false,
-        defaultValue: 0,
-        type: Sequelize.INTEGER
+        type: Sequelize.TEXT
       },
       createdAt: {
         allowNull: false,

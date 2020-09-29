@@ -5,7 +5,6 @@ module.exports = {
     return queryInterface.bulkInsert('Messages', [{
       userId: 3,
       content: 'Bonjour bonjour',
-      like: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     }]);
