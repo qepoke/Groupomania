@@ -1,6 +1,8 @@
-# Projet n°7 : Création d'un réseau social d'entreprise
+# Formation Développeur Web OPENCLASSROOMS
 
-# Parcours Développeur Web : OPENCLASSROOMS
+## Groupomania
+Projet n°7 : Création d'un réseau social d'entreprise
+
 
 
 ## Comment démarrer le projet ?
